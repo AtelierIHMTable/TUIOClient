@@ -14,7 +14,9 @@
     "dist": "babel src/ -d dist/"
   },
   "dependencies": {
-    "node-osc": "2.0.4"
+    "express": "4.14.0",
+    "node-osc": "2.0.4",
+    "socket.io": "1.7.2"
   },
   "devDependencies": {
     "babel-cli": "6.18.0",

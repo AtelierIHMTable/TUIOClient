@@ -5,4 +5,6 @@
 // Import TUIOClient
 import TUIOClient from './TUIOClient';
 
-new TUIOClient();
+const tuioClient = new TUIOClient();
+
+tuioClient.start();
