@@ -7,7 +7,7 @@
   },
   "private": true,
   "license": "AtelierIHM",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "develop": "babel-node src/index.js",
     "build": "babel src/ -d build/ -s",
