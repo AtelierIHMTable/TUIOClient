@@ -148,7 +148,8 @@ class TUIOClient {
         if (touchesIds.length > 0) {
           if (message.length > 2) {
             const aliveTouches = message.slice(2, message.length);
-            touchesIds.forEach((touchId) => {
+            touchesIds.forEach((touchKey) => {
+              const touchId = this._touches[touchKey].id;
               if (!aliveTouches.includes(touchId)) {
                 this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._touches[touchId].toJSON());
                 delete this._touches[touchId];
@@ -194,7 +195,8 @@ class TUIOClient {
         if (tagsIds.length > 0) {
           if (message.length > 2) {
             const aliveTags = message.slice(2, message.length);
-            tagsIds.forEach((tagId) => {
+            tagsIds.forEach((tagKey) => {
+              const tagId = this._tags[tagKey].id;
               if (!aliveTags.includes(tagId)) {
                 this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagId].toJSON());
                 delete this._tags[tagId];
