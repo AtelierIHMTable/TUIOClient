@@ -150,7 +150,7 @@ class TUIOClient {
             const aliveTouches = message.slice(2, message.length);
             touchesIds.forEach((touchKey) => {
               const touchId = this._touches[touchKey].id;
-              if (aliveTouches.indexOf(touchId) !== -1) {
+              if (aliveTouches.indexOf(touchId) === -1) {
                 this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._touches[touchId].toJSON());
                 delete this._touches[touchId];
               }
@@ -197,7 +197,7 @@ class TUIOClient {
             const aliveTags = message.slice(2, message.length);
             tagsIds.forEach((tagKey) => {
               const tagId = this._tags[tagKey].id;
-              if (aliveTags.indexOf(tagId) !== -1) {
+              if (aliveTags.indexOf(tagId) === -1) {
                 this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagId].toJSON());
                 delete this._tags[tagId];
               }
