@@ -1,6 +1,6 @@
 {
-  "name": "TUIOClient",
-  "version": "0.0.1",
+  "name": "tuioclient",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/AtelierIHMTable/TUIOClient.git"
