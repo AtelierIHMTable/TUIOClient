@@ -31,7 +31,13 @@ class TUIOClient {
   constructor() {
     this._touches = {};
     this._tags = {};
+
     this._socketIOClients = {};
+
+    this._touchesStatuses = {};
+    this._tagsStatuses = {};
+    this._touchesBuffer = {};
+    this._tagsBuffer = {};
   }
 
   /**
@@ -40,8 +46,9 @@ class TUIOClient {
    * @method start
    * @param {number} listenedOSCPort - OSC's port. Default : 3333
    * @param {number} socketIOPort - Socket IO Server's port. Default : 9000
+   * @param {number} sendingRate - Socket IO sending rate in milliseconds. Default : 1/60 second
    */
-  start(listenedOSCPort = 3333, socketIOPort = 9000) {
+  start(listenedOSCPort = 3333, socketIOPort = 9000, sendingRate = (1000 / 60)) {
     this._oscServer = new Server(listenedOSCPort);
 
     this._oscServer.on('message', (msg) => {
@@ -57,6 +64,7 @@ class TUIOClient {
       console.info('TUIO Client is ready.');
       console.info('Listened OSC\'s port is ', listenedOSCPort);
       console.info('Socket.IO\'s port is ', socketIOPort);
+      setInterval(() => this.manageBuffers(), sendingRate);
     });
   }
 
@@ -151,13 +159,19 @@ class TUIOClient {
             touchesIds.forEach((touchKey) => {
               const touchId = this._touches[touchKey].id;
               if (aliveTouches.indexOf(touchId) === -1) {
-                this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._touches[touchId].toJSON());
+                this._touchesBuffer[touchId] = {
+                  action: DELETE_SOCKETIO_ACTION,
+                  json: this._touches[touchId].toJSON(),
+                };
                 delete this._touches[touchId];
               }
             });
           } else {
             touchesIds.forEach((touchId) => {
-              this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._touches[touchId].toJSON());
+              this._touchesBuffer[touchId] = {
+                action: DELETE_SOCKETIO_ACTION,
+                json: this._touches[touchId].toJSON(),
+              };
               delete this._touches[touchId];
             });
           }
@@ -168,9 +182,15 @@ class TUIOClient {
         if (message.length > 4) {
           const tuioTouch = new TUIOTouch(message[2], message[3], message[4]);
           if (typeof (this._touches[tuioTouch.id]) !== 'undefined') {
-            this._ioServer.emit(UPDATE_SOCKETIO_ACTION, tuioTouch.toJSON());
+            this._touchesBuffer[tuioTouch.id] = {
+              action: UPDATE_SOCKETIO_ACTION,
+              json: tuioTouch.toJSON(),
+            };
           } else {
-            this._ioServer.emit(CREATE_SOCKETIO_ACTION, tuioTouch.toJSON());
+            this._touchesBuffer[tuioTouch.id] = {
+              action: CREATE_SOCKETIO_ACTION,
+              json: tuioTouch.toJSON(),
+            };
           }
           this._touches[tuioTouch.id] = tuioTouch;
         }
@@ -198,13 +218,21 @@ class TUIOClient {
             tagsIds.forEach((tagKey) => {
               const tagId = this._tags[tagKey].id;
               if (aliveTags.indexOf(tagId) === -1) {
-                this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagId].toJSON());
+                // this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagKey].toJSON());
+                this._tagsBuffer[this._tags[tagKey].tagId] = {
+                  action: DELETE_SOCKETIO_ACTION,
+                  json: this._tags[tagKey].toJSON(),
+                };
                 delete this._tags[tagId];
               }
             });
           } else {
             tagsIds.forEach((tagId) => {
-              this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagId].toJSON());
+              // this._ioServer.emit(DELETE_SOCKETIO_ACTION, this._tags[tagId].toJSON());
+              this._tagsBuffer[this._tags[tagId].tagId] = {
+                action: DELETE_SOCKETIO_ACTION,
+                json: this._tags[tagId].toJSON(),
+              };
               delete this._tags[tagId];
             });
           }
@@ -215,9 +243,17 @@ class TUIOClient {
         if (message.length > 6) {
           const tuioTag = new TUIOTag(message[2], message[3], message[4], message[5], message[6]);
           if (typeof (this._tags[tuioTag.id]) !== 'undefined') {
-            this._ioServer.emit(UPDATE_SOCKETIO_ACTION, tuioTag.toJSON());
+            // this._ioServer.emit(UPDATE_SOCKETIO_ACTION, tuioTag.toJSON());
+            this._tagsBuffer[tuioTag.tagId] = {
+              action: UPDATE_SOCKETIO_ACTION,
+              json: tuioTag.toJSON(),
+            };
           } else {
-            this._ioServer.emit(CREATE_SOCKETIO_ACTION, tuioTag.toJSON());
+            // this._ioServer.emit(CREATE_SOCKETIO_ACTION, tuioTag.toJSON());
+            this._tagsBuffer[tuioTag.tagId] = {
+              action: CREATE_SOCKETIO_ACTION,
+              json: tuioTag.toJSON(),
+            };
           }
           this._tags[tuioTag.id] = tuioTag;
         }
@@ -225,6 +261,126 @@ class TUIOClient {
       }
       default:
     }
+  }
+
+  /**
+   * Manage buffers and send result to Socket.IO channel.
+   *
+   * @method manageBuffers
+   */
+  manageBuffers() {
+    this.processTouchesBuffer();
+    this.processTagsBuffer();
+  }
+
+  /**
+   * Process touches buffer and send result to Socket.IO channel.
+   *
+   * @method processTouchesBuffer
+   */
+  processTouchesBuffer() {
+    // Check if statuses with flag 'delete'.
+    // For a status, if there is no action in buffer, send delete message
+    // Else unflag it.
+    const touchesStatusesKeys = Object.keys(this._touchesStatuses);
+    touchesStatusesKeys.forEach((key) => {
+      const touchStatus = this._touchesStatuses[key];
+      if (touchStatus.delete) {
+        if (typeof (this._touchesBuffer[key]) !== 'undefined') {
+          this._touchesStatuses[key] = {
+            ...this._touchesStatuses[key],
+            delete: false,
+          };
+        } else {
+          this._ioServer.emit(DELETE_SOCKETIO_ACTION, touchStatus.json);
+          delete this._touchesStatuses[key];
+        }
+      }
+    });
+
+    // Manage last actions in buffers.
+    const touchesBufferKeys = Object.keys(this._touchesBuffer);
+    touchesBufferKeys.forEach((key) => {
+      const touchBuffer = this._touchesBuffer[key];
+      switch (touchBuffer.action) {
+        case CREATE_SOCKETIO_ACTION: // If 'create' action, then choose if it's a real create or if it's just an update.
+        case UPDATE_SOCKETIO_ACTION: // If 'update' action, then choose if it's a real update or if it's just a create.
+          if (typeof (this._touchesStatuses[key]) !== 'undefined') {
+            this._ioServer.emit(UPDATE_SOCKETIO_ACTION, touchBuffer.json);
+          } else {
+            this._ioServer.emit(CREATE_SOCKETIO_ACTION, touchBuffer.json);
+          }
+          this._touchesStatuses[key] = {
+            delete: false,
+            json: touchBuffer.json,
+          };
+          break;
+        case DELETE_SOCKETIO_ACTION: // If 'delete' action, add 'delete' flag.
+          this._touchesStatuses[key] = {
+            delete: true,
+            json: touchBuffer.json,
+          };
+          break;
+        default:
+      }
+    });
+
+    this._touchesBuffer = {};
+  }
+
+  /**
+   * Process tags buffer and send result to Socket.IO channel.
+   *
+   * @method processTagsBuffer
+   */
+  processTagsBuffer() {
+    // Check if statuses with flag 'delete'.
+    // For a status, if there is no action in buffer, send delete message
+    // Else unflag it.
+    const tagsStatusesKeys = Object.keys(this._tagsStatuses);
+    tagsStatusesKeys.forEach((key) => {
+      const tagStatus = this._tagsStatuses[key];
+      if (tagStatus.delete) {
+        if (typeof (this._tagsBuffer[key]) !== 'undefined') {
+          this._tagsStatuses[key] = {
+            ...this._tagsStatuses[key],
+            delete: false,
+          };
+        } else {
+          this._ioServer.emit(DELETE_SOCKETIO_ACTION, tagStatus.json);
+          delete this._tagsStatuses[key];
+        }
+      }
+    });
+
+    // Manage last actions in buffers.
+    const tagsBufferKeys = Object.keys(this._tagsBuffer);
+    tagsBufferKeys.forEach((key) => {
+      const tagBuffer = this._tagsBuffer[key];
+      switch (tagBuffer.action) {
+        case CREATE_SOCKETIO_ACTION: // If 'create' action, then choose if it's a real create or if it's just an update.
+        case UPDATE_SOCKETIO_ACTION: // If 'update' action, then choose if it's a real update or if it's just a create.
+          if (typeof (this._tagsStatuses[key]) !== 'undefined') {
+            this._ioServer.emit(UPDATE_SOCKETIO_ACTION, tagBuffer.json);
+          } else {
+            this._ioServer.emit(CREATE_SOCKETIO_ACTION, tagBuffer.json);
+          }
+          this._tagsStatuses[key] = {
+            delete: false,
+            json: tagBuffer.json,
+          };
+          break;
+        case DELETE_SOCKETIO_ACTION: // If 'delete' action, add 'delete' flag.
+          this._tagsStatuses[key] = {
+            delete: true,
+            json: tagBuffer.json,
+          };
+          break;
+        default:
+      }
+    });
+
+    this._tagsBuffer = {};
   }
 }
 
