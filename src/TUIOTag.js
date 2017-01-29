@@ -29,6 +29,13 @@ class TUIOTag extends TUIOObject {
   }
 
   /**
+   * TUIOTag's tagId getter.
+   *
+   * @returns {string|number} TUIOTag's tagId.
+   */
+  get tagId() { return this._tagId; }
+
+  /**
    * Give the TUIOTag's JSON representation.
    *
    * @method toJSON
@@ -37,8 +44,8 @@ class TUIOTag extends TUIOObject {
     const objJSON = super.toJSON();
     return {
       ...objJSON,
+      id: this._tagId,
       type: TAG_SOCKETIO_TYPE,
-      tagId: this._tagId,
       angle: this._angle,
     };
   }
