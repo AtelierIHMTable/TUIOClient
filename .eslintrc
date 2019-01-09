@@ -5,11 +5,6 @@
   },
   "parser": "babel-eslint",
   "extends": "airbnb-base",
-  "parserOptions": {
-    "ecmaFeatures": {
-      "experimentalObjectRestSpread": true
-    }
-  },
   "rules": {
     "max-len": [1, 200],
     "no-underscore-dangle": [2, { "allowAfterThis": true }]
