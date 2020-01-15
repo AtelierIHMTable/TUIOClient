@@ -8,7 +8,6 @@
  * @class TUIOObject
  */
 class TUIOObject {
-
   /**
    * TUIOObject constructor.
    *
@@ -18,9 +17,9 @@ class TUIOObject {
    * @param {string/number} y - TUIOObject's ordinate.
    */
   constructor(id, x, y) {
-    this._id = id;
-    this._x = x;
-    this._y = y;
+    this._id = id
+    this._x = x
+    this._y = y
   }
 
   /**
@@ -28,7 +27,7 @@ class TUIOObject {
    *
    * @returns {string|number} TUIOObject's id.
    */
-  get id() { return this._id; }
+  get id() { return this._id }
 
   /**
    * Give the TUIOObject's JSON representation.
@@ -40,8 +39,8 @@ class TUIOObject {
       id: this._id,
       x: this._x,
       y: this._y,
-    };
+    }
   }
 }
 
-export default TUIOObject;
+export default TUIOObject

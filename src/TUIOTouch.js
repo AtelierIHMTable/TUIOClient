@@ -2,9 +2,9 @@
  * @author Christian Brel <ch.brel@gmail.com>
  */
 
-import TUIOObject from './TUIOObject';
+import TUIOObject from './TUIOObject'
 
-import { TOUCH_SOCKETIO_TYPE } from './constants';
+import { TOUCH_SOCKETIO_TYPE } from './constants'
 
 /**
  * Main class to manage TUIOTouch.
@@ -19,12 +19,12 @@ class TUIOTouch extends TUIOObject {
    * @method toJSON
    */
   toJSON() {
-    const objJSON = super.toJSON();
+    const objJSON = super.toJSON()
     return {
       ...objJSON,
       type: TOUCH_SOCKETIO_TYPE,
-    };
+    }
   }
 }
 
-export default TUIOTouch;
+export default TUIOTouch

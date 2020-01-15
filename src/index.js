@@ -3,8 +3,8 @@
  */
 
 // Import TUIOClient
-import TUIOClient from './TUIOClient';
+import TUIOClient from './TUIOClient'
 
-const tuioClient = new TUIOClient();
+const tuioClient = new TUIOClient()
 
-tuioClient.start();
+tuioClient.start()

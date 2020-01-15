@@ -2,9 +2,9 @@
  * @author Christian Brel <ch.brel@gmail.com>
  */
 
-import TUIOObject from './TUIOObject';
+import TUIOObject from './TUIOObject'
 
-import { TAG_SOCKETIO_TYPE } from './constants';
+import { TAG_SOCKETIO_TYPE } from './constants'
 
 /**
  * Main class to manage TUIOTag.
@@ -13,19 +13,20 @@ import { TAG_SOCKETIO_TYPE } from './constants';
  * @extends TUIOObject
  */
 class TUIOTag extends TUIOObject {
-
   /**
    * TUIOTag constructor.
    *
    * @constructor
    * @param {string/number} id - TUIOTag's id.
+   * @param {string/number} tagId - TUIOTag's tagId.
    * @param {string/number} x - TUIOTag's abscissa.
    * @param {string/number} y - TUIOTag's ordinate.
+   * @param {string/number} angle - TUIOTag's angle.
    */
   constructor(id, tagId, x, y, angle) {
-    super(id, x, y);
-    this._tagId = tagId;
-    this._angle = angle;
+    super(id, x, y)
+    this._tagId = tagId
+    this._angle = angle
   }
 
   /**
@@ -33,7 +34,7 @@ class TUIOTag extends TUIOObject {
    *
    * @returns {string|number} TUIOTag's tagId.
    */
-  get tagId() { return this._tagId; }
+  get tagId() { return this._tagId }
 
   /**
    * Give the TUIOTag's JSON representation.
@@ -41,14 +42,14 @@ class TUIOTag extends TUIOObject {
    * @method toJSON
    */
   toJSON() {
-    const objJSON = super.toJSON();
+    const objJSON = super.toJSON()
     return {
       ...objJSON,
       id: this._tagId,
       type: TAG_SOCKETIO_TYPE,
       angle: this._angle,
-    };
+    }
   }
 }
 
-export default TUIOTag;
+export default TUIOTag
