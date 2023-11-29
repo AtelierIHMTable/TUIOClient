@@ -2,19 +2,20 @@
  * @author Christian Brel <ch.brel@gmail.com>
  */
 
-import { Server } from 'node-osc'
 import http from 'http'
 import express from 'express'
-import sio from 'socket.io'
+// eslint-disable-next-line import/no-unresolved
+import { Server as OSCServer } from 'node-osc'
+import { Server as SIOServer } from 'socket.io'
 
-import TUIOTouch from './TUIOTouch'
-import TUIOTag from './TUIOTag'
+import TUIOTouch from './TUIOTouch.js'
+import TUIOTag from './TUIOTag.js'
 
 import {
   TOUCH_TUIO_TYPE, TAG_TUIO_TYPE,
   ALIVE_TUIO_ACTION, SET_TUIO_ACTION,
   CREATE_SOCKETIO_ACTION, UPDATE_SOCKETIO_ACTION, DELETE_SOCKETIO_ACTION,
-} from './constants'
+} from './constants.js'
 
 /**
  * Main class to manage TUIOClient.
@@ -48,21 +49,24 @@ class TUIOClient {
    * @param {number} sendingRate - Socket IO sending rate in milliseconds. Default : 1/60 second
    */
   start(listenedOSCPort = 3333, socketIOPort = 9000, sendingRate = (1000 / 60)) {
-    this._oscServer = new Server(listenedOSCPort)
+    this._oscServer = new OSCServer(listenedOSCPort)
 
-    this._oscServer.on('message', (msg) => {
-      this.handleTUIOMessage(msg)
+    this._oscServer.on('bundle', (msg) => {
+      this.handleTUIOBundleMessage(msg)
     })
 
     this._app = express()
     this._httpServer = http.createServer(this._app)
-    this._ioServer = sio(this._httpServer)
+    this._ioServer = new SIOServer(this._httpServer)
     this.handleSocketIOClient()
 
     this._httpServer.listen(socketIOPort, () => {
       console.info('TUIO Client is ready.')
       console.info('Listened OSC\'s port is ', listenedOSCPort)
       console.info('Socket.IO\'s port is ', socketIOPort)
+      if (process.env.ENABLE_DEBUG) {
+        console.log('Debug mode enabled')
+      }
       setInterval(() => this.manageBuffers(), sendingRate)
     })
   }
@@ -116,28 +120,26 @@ class TUIOClient {
   }
 
   /**
-   * Handle TUIO Message, process it and send result to Socket.IO channel.
+   * Handle TUIO Bundle type Message, process it and send result to Socket.IO channel.
    *
-   * @method handleTUIOMessage
-   * @param {string} message - Message from OSC.
+   * @method handleTUIOBundleMessage
+   * @param {object} bundleMessage - Bundle Message from OSC.
    */
-  handleTUIOMessage(message) {
-    if (Array.isArray(message)) {
-      message.forEach((messElem) => {
-        if (Array.isArray(messElem) && messElem.length > 1) {
-          const messType = messElem[0]
-          switch (messType) {
-            case TOUCH_TUIO_TYPE:
-              this.handleTouch(messElem)
-              break
-            case TAG_TUIO_TYPE:
-              this.handleTag(messElem)
-              break
-            default:
-          }
+  handleTUIOBundleMessage(bundleMessage) {
+    bundleMessage.elements.forEach((messElem) => {
+      if (Array.isArray(messElem) && messElem.length > 1) {
+        const messType = messElem[0]
+        switch (messType) {
+          case TOUCH_TUIO_TYPE:
+            this.handleTouch(messElem)
+            break
+          case TAG_TUIO_TYPE:
+            this.handleTag(messElem)
+            break
+          default:
         }
-      })
-    }
+      }
+    })
   }
 
   /**
@@ -289,6 +291,9 @@ class TUIOClient {
             delete: false,
           }
         } else {
+          if (process.env.ENABLE_DEBUG) {
+            console.log(DELETE_SOCKETIO_ACTION, touchStatus.json)
+          }
           this._ioServer.emit(DELETE_SOCKETIO_ACTION, touchStatus.json)
           delete this._touchesStatuses[key]
         }
@@ -303,8 +308,14 @@ class TUIOClient {
         case CREATE_SOCKETIO_ACTION: // If 'create' action, then choose if it's a real create or if it's just an update.
         case UPDATE_SOCKETIO_ACTION: // If 'update' action, then choose if it's a real update or if it's just a create.
           if (typeof (this._touchesStatuses[key]) !== 'undefined') {
+            if (process.env.ENABLE_DEBUG) {
+              console.log(UPDATE_SOCKETIO_ACTION, touchBuffer.json)
+            }
             this._ioServer.emit(UPDATE_SOCKETIO_ACTION, touchBuffer.json)
           } else {
+            if (process.env.ENABLE_DEBUG) {
+              console.log(CREATE_SOCKETIO_ACTION, touchBuffer.json)
+            }
             this._ioServer.emit(CREATE_SOCKETIO_ACTION, touchBuffer.json)
           }
           this._touchesStatuses[key] = {
@@ -344,6 +355,9 @@ class TUIOClient {
             delete: false,
           }
         } else {
+          if (process.env.ENABLE_DEBUG) {
+            console.log(DELETE_SOCKETIO_ACTION, tagStatus.json)
+          }
           this._ioServer.emit(DELETE_SOCKETIO_ACTION, tagStatus.json)
           delete this._tagsStatuses[key]
         }
@@ -358,8 +372,14 @@ class TUIOClient {
         case CREATE_SOCKETIO_ACTION: // If 'create' action, then choose if it's a real create or if it's just an update.
         case UPDATE_SOCKETIO_ACTION: // If 'update' action, then choose if it's a real update or if it's just a create.
           if (typeof (this._tagsStatuses[key]) !== 'undefined') {
+            if (process.env.ENABLE_DEBUG) {
+              console.log(UPDATE_SOCKETIO_ACTION, tagBuffer.json)
+            }
             this._ioServer.emit(UPDATE_SOCKETIO_ACTION, tagBuffer.json)
           } else {
+            if (process.env.ENABLE_DEBUG) {
+              console.log(CREATE_SOCKETIO_ACTION, tagBuffer.json)
+            }
             this._ioServer.emit(CREATE_SOCKETIO_ACTION, tagBuffer.json)
           }
           this._tagsStatuses[key] = {

@@ -2,9 +2,9 @@
  * @author Christian Brel <ch.brel@gmail.com>
  */
 
-import TUIOObject from './TUIOObject'
+import TUIOObject from './TUIOObject.js'
 
-import { TAG_SOCKETIO_TYPE } from './constants'
+import { TAG_SOCKETIO_TYPE } from './constants.js'
 
 /**
  * Main class to manage TUIOTag.
