@@ -3,7 +3,7 @@
  */
 
 // Import TUIOClient
-import TUIOClient from './TUIOClient'
+import TUIOClient from './TUIOClient.js'
 
 const tuioClient = new TUIOClient()
 

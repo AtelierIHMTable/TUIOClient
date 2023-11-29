@@ -3,11 +3,11 @@
     "browser": true,
     "node": true
   },
-  "parser": "babel-eslint",
   "extends": "airbnb-base",
   "rules": {
     "max-len": [1, 200],
     "no-underscore-dangle": [2, { "allowAfterThis": true }],
-    "semi": "off"
+    "semi": "off",
+    "import/extensions": "off"
   }
 }
