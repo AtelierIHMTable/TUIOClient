@@ -1,6 +1,6 @@
 {
   "name": "tuioclient",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/AtelierIHMTable/TUIOClient.git"
@@ -12,6 +12,7 @@
   "scripts": {
     "start": "node src/index.js",
     "debug": "ENABLE_DEBUG=true node src/index.js",
+    "powershellDebug": "start powershellDebug.bat",
     "eslint": "eslint src/"
   },
   "dependencies": {
